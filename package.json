@@ -1,0 +1,53 @@
+{
+  "name": "ib-web-api",
+  "version": "0.0.1",
+  "description": "Interactive Brokers Client Portal Web API client library for Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --timeout 4s test/init.js 'test/**/*.test.js'"
+  },
+  "keywords": [
+    "interactive",
+    "brokers",
+    "tws",
+    "twsapi",
+    "ib",
+    "finance",
+    "stock",
+    "bond",
+    "option",
+    "forex",
+    "future",
+    "ticker",
+    "symbol",
+    "quote",
+    "market",
+    "data",
+    "automated",
+    "invest",
+    "trade",
+    "trading",
+    "system",
+    "api",
+    "client",
+    "library"
+  ],
+  "author": {
+    "name": "Stefan",
+    "email": "viras34@gmail.com"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.5",
+    "urljoin": "^0.1.5"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "express": "^4.17.1",
+    "joi": "^14.3.1",
+    "mocha": "^6.2.2"
+  }
+}

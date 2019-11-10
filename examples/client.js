@@ -45,18 +45,12 @@ class Client extends events.EventEmitter {
 
         this.emit(STATE.CONNECTING);
         try {
-            //
-            //
-            //
-
             me.ib.session.status().then(async (status) => {
-                console.log(status)
                 if(status.connected === true && status.authenticated === true){
                     await me.ib.account.accounts().then((data) => {
                         me.selectedAccount = data.selectedAccount;
-                        // this.emit(STATE.CONNECTED);
+                        me.emit(STATE.CONNECTED);
                     });
-                    me.emit(STATE.CONNECTED);
                 } else {
                     // await me.ib.session.validate();
                     await me.ib.session.reauthenticate().then();

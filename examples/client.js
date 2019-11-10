@@ -11,6 +11,7 @@ const EVENT = {
 };
 const ERROR = {
     UNAUTHORIZED_CLIENT: 'not authenticated client',
+    UNABLE_TO_CONNECT: 'unable to connect'
 };
 
 class Client extends events.EventEmitter {
@@ -39,20 +40,14 @@ class Client extends events.EventEmitter {
         return this;
     }
 
-    async connect(){
+    async connect(reconnect=true){
         let me = this;
 
         this.emit(STATE.CONNECTING);
         try {
-            // await me.ib.session.validate()
-            //     .catch(function (err) {
-            //         if(err.name === 'StatusCodeError' && err.statusCode === 401) {
-            //             me._emitError(ERROR.UNAUTHORIZED_CLIENT);
-            //             console.log('Not authenticated client. To authenticate the gateway session with your account, go to https://localhost:5000/ ');
-            //         } else
-            //             me._emitError(err.message);
-            //     });
-            // await me.ib.session.reauthenticate().then();
+            //
+            //
+            //
 
             me.ib.session.status().then(async (status) => {
                 console.log(status)
@@ -63,13 +58,23 @@ class Client extends events.EventEmitter {
                     });
                     me.emit(STATE.CONNECTED);
                 } else {
-
+                    // await me.ib.session.validate();
+                    await me.ib.session.reauthenticate().then();
+                    if(reconnect)
+                        await me.connect(false);
+                    else
+                        me._emitError(ERROR.UNABLE_TO_CONNECT);
                 }
+            }).catch(function (err) {
+                if(err.name === 'StatusCodeError' && err.statusCode === 401) {
+                    me._emitError(ERROR.UNAUTHORIZED_CLIENT);
+                    console.log('Not authenticated client. To authenticate the gateway session with your account, go to https://localhost:5000/ ');
+                } else
+                    me._emitError(err.message);
             });
         } catch (e) {
 
         }
-
     }
 
     async getContract(symbol, secType){
@@ -88,12 +93,49 @@ class Client extends events.EventEmitter {
     }
 
     async getSnapshot(contract){
-        let me = this,
-            snapshot;
+        let snapshot;
         await this.ib.market.snapshot([contract.conid]).then((data) => {
             snapshot = data;
         });
-        return snapshot;
+        return this._normalizeSnapshot(snapshot[0]);
+    }
+
+    async submitOrder(contract, type, price, side, quantity){
+        let order = {
+            type: type,
+            exchange: 'SMART',
+            outsideRTH: true,
+            price: price,
+            side: side,
+            tif: 'GTC',
+            quantity: quantity
+
+        };
+        await this.ib.orders.placeOrder(this.selectedAccount, contract, order).then((data) => {
+            order.id = data[0].order_id;
+            order.status = data[0].order_status;
+        }).catch(function (err) {
+           console.log(err);
+        });
+        return order;
+    }
+
+    _normalizeSnapshot(data){
+        let fields = {
+            31: 'last',
+            66: 'symbol',
+            70: 'high',
+            71: 'low',
+            84: 'bid',
+            85: 'bidSize',
+            86: 'ask',
+            88: 'askSize',
+        }, out = {};
+        for(let field in fields){
+            if(data.hasOwnProperty(field))
+                out[fields[field]] = data[field];
+        }
+        return out;
     }
 
     _emitError(errMsg){
@@ -112,6 +154,8 @@ let client = new Client()
         let contract = await client.getContract('AMD', 'STK');
         // console.log(contract);
         let snapshot = await client.getSnapshot(contract);
-        console.log(snapshot)
+        // console.log(snapshot);
+        let order = await client.submitOrder(contract, 'MKT', snapshot.ask, 'BUY', 1);
+
     });
 client.connect();
